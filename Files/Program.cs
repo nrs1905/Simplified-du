@@ -15,19 +15,21 @@ namespace filesearch
             "\tRuns parallel followed by sequential mode\n";
         static void Main(string[] args)
         {
+            bool exists;
             var use = "";
             var path = "";
             try
             {
                 use = args[0];
-                path = args[1];
+                path = args[1]; 
+                exists = Directory.Exists(path);
             }
             catch (Exception)
             {
                 printHelp();
                 return;
             }
-            if(use != "-s" &  use != "-d" &  use != "-b")
+            if(use != "-s" &  use != "-d" &  use != "-b" | !exists)
             {
                 printHelp();
                 return;
