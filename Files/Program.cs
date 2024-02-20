@@ -32,11 +32,31 @@ namespace filesearch
                 printHelp();
                 return;
             }
-            Console.WriteLine("Reached" + path);
+            if(use == "-s")
+            {
+                syncSearch(path);
+            }
+            else if(use == "-d")
+            {
+                parallelSearch(path);
+            }
+            else
+            {
+                parallelSearch(path);
+                syncSearch(path);
+            }
         }
-        static public void printHelp()
+        static private void printHelp()
     {
         Console.WriteLine(help);
     }
+        static private void syncSearch(string path)
+        {
+            //
+        }
+        static private void parallelSearch(string path)
+        {
+            //
+        }
     }
 }
