@@ -16,6 +16,11 @@ namespace filesearch
             "-b\tRun in both parallel and single threaded mode.\r\n" +
             "\tRuns parallel followed by sequential mode\n";
         static string[] imageExtensions = new string[] { ".apng", ".avif", ".gif", ".jpg", ".jpeg", ".jfif", ".pjpeg", ".pjp", ".png", ".svg", ".webp", ".bmp", ".ico", ".cur", ".tif", ".tiff"};
+        static long icount = 0;
+        static long isize = 0;
+        static long fcount = 0;
+        static long fsize = 0;
+        static long fdcount = 0;
         static void Main(string[] args)
         {
             bool exists;
@@ -125,12 +130,12 @@ namespace filesearch
             long fileCount = 0;
             long imgSize = 0;
             long foldercount = 0;
-            var stats = parallelSearch(path, imgSize, imgCount, fileCount, fileSize, foldercount);
-            imgSize = stats[0];
-            imgCount = stats[1];
-            fileCount = stats[2];
-            fileSize = stats[3];
-            foldercount = stats[4];
+            parallelSearch(path, imgSize, imgCount, fileCount, fileSize, foldercount);
+            imgSize = isize;
+            imgCount = icount;
+            fileCount = fcount;
+            fileSize = fsize;
+            foldercount = fdcount;
             stopwatch.Stop();
             TimeSpan ts = stopwatch.Elapsed;
             String elapsedTime = ts.TotalSeconds + "s";
@@ -139,18 +144,13 @@ namespace filesearch
             Console.WriteLine(imgCount + " image files, " + imgSize + " bytes");
         }
 
-        static private long[] parallelSearch(string path, long imgSize, long imgCount, long fileCount, long fileSize, long foldercount)
+        static private void parallelSearch(string path, long imgSize, long imgCount, long fileCount, long fileSize, long foldercount)
         {
             string[] folders = Directory.GetDirectories(path);
             Parallel.ForEach(folders, folder =>
             {
-                foldercount++;
-                var stats = parallelSearch(folder, imgSize, imgCount, fileCount, fileSize, foldercount);
-                imgSize = stats[0];
-                imgCount = stats[1];
-                fileCount = stats[2];
-                fileSize = stats[3];
-                foldercount = stats[4];
+                Interlocked.Increment(ref fdcount);
+                parallelSearch(folder, imgSize, imgCount, fileCount, fileSize, foldercount);
             }
             );
             string[] files = Directory.GetFiles(path);
@@ -161,15 +161,15 @@ namespace filesearch
                     var extension = Path.GetExtension(file);
                     if (imageExtensions.Contains(extension))
                     {
-                        imgCount++;
+                        Interlocked.Increment(ref icount);
                         var stats = new FileInfo(file);
-                        imgSize += stats.Length;
+                        Interlocked.Add(ref isize, stats.Length);
                     }
                     else
                     {
-                        fileCount++;
+                        Interlocked.Increment(ref fcount);
                         var stats = new FileInfo(file);
-                        fileSize += stats.Length;
+                        Interlocked.Add(ref fsize, stats.Length);
                     }
                 }
                 catch (Exception)
@@ -178,7 +178,7 @@ namespace filesearch
                 }
             }
             );
-            return new long[] { imgSize, imgCount, fileCount, fileSize, foldercount };
+            //return new long[] { imgSize, imgCount, fileCount, fileSize, foldercount };
         }
     }
 }
