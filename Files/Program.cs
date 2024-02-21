@@ -43,11 +43,11 @@ namespace filesearch
             }
             else if(use == "-d")
             {
-                parallelSearch(path);
+                parallelStart(path);
             }
             else
             {
-                parallelSearch(path);
+                parallelStart(path);
                 syncStart(path);
             }
         }
@@ -115,9 +115,33 @@ namespace filesearch
             }
             return new long[] {imgSize, imgCount, fileCount, fileSize, foldercount};
         }
-        static private void parallelSearch(string path)
+
+        static private void parallelStart(string path)
         {
-            //
+            Stopwatch stopwatch = new Stopwatch();
+            stopwatch.Start();
+            long imgCount = 0;
+            long fileSize = 0;
+            long fileCount = 0;
+            long imgSize = 0;
+            long foldercount = 0;
+            var stats = parallelSearch(path, imgSize, imgCount, fileCount, fileSize, foldercount);
+            imgSize = stats[0];
+            imgCount = stats[1];
+            fileCount = stats[2];
+            fileSize = stats[3];
+            foldercount = stats[4];
+            stopwatch.Stop();
+            TimeSpan ts = stopwatch.Elapsed;
+            String elapsedTime = ts.TotalSeconds + "s";
+            Console.WriteLine("Parallel Calculated in : " + elapsedTime);
+            Console.WriteLine(foldercount + " folders, " + fileCount + " files, " + fileSize.ToString("n0") + " bytes");
+            Console.WriteLine(imgCount + " image files, " + imgSize + " bytes");
+        }
+
+        static private long[] parallelSearch(string path, long imgSize, long imgCount, long fileCount, long fileSize, long foldercount)
+        {
+            return new long[] { imgSize, imgCount, fileCount, fileSize, foldercount };
         }
     }
 }
