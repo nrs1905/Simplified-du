@@ -72,9 +72,9 @@ namespace filesearch
             foldercount = stats[4];
             stopwatch.Stop();
             TimeSpan ts = stopwatch.Elapsed;
-            string elapsedTime = "" + ts.Seconds + "." + ts.Milliseconds;
+            String elapsedTime = ts.TotalSeconds + "s";
             Console.WriteLine("Sequential Calculated in : " + elapsedTime);
-            Console.WriteLine(foldercount + " folders, " + fileCount + " files, " + fileSize + " bytes");
+            Console.WriteLine(foldercount + " folders, " + fileCount + " files, " + fileSize.ToString("n0") + " bytes");
             Console.WriteLine(imgCount + " image files, " + imgSize + " bytes");
         }
         static private long[] syncSearch(string path, long imgSize, long imgCount, long fileCount, long fileSize, long foldercount)
