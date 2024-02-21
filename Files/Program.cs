@@ -141,6 +141,43 @@ namespace filesearch
 
         static private long[] parallelSearch(string path, long imgSize, long imgCount, long fileCount, long fileSize, long foldercount)
         {
+            string[] folders = Directory.GetDirectories(path);
+            Parallel.ForEach(folders, folder =>
+            {
+                foldercount++;
+                var stats = parallelSearch(folder, imgSize, imgCount, fileCount, fileSize, foldercount);
+                imgSize = stats[0];
+                imgCount = stats[1];
+                fileCount = stats[2];
+                fileSize = stats[3];
+                foldercount = stats[4];
+            }
+            );
+            string[] files = Directory.GetFiles(path);
+            Parallel.ForEach(files, file =>
+            {
+                try
+                {
+                    var extension = Path.GetExtension(file);
+                    if (imageExtensions.Contains(extension))
+                    {
+                        imgCount++;
+                        var stats = new FileInfo(file);
+                        imgSize += stats.Length;
+                    }
+                    else
+                    {
+                        fileCount++;
+                        var stats = new FileInfo(file);
+                        fileSize += stats.Length;
+                    }
+                }
+                catch (Exception)
+                {
+                    //Swallow
+                }
+            }
+            );
             return new long[] { imgSize, imgCount, fileCount, fileSize, foldercount };
         }
     }
