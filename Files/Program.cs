@@ -31,6 +31,7 @@ namespace filesearch
                 use = args[0];
                 path = args[1]; 
                 exists = Directory.Exists(path);
+                Console.WriteLine("Directory " + path + ":\n");
             }
             catch (Exception)
             {
@@ -78,9 +79,16 @@ namespace filesearch
             stopwatch.Stop();
             TimeSpan ts = stopwatch.Elapsed;
             String elapsedTime = ts.TotalSeconds + "s";
-            Console.WriteLine("Sequential Calculated in : " + elapsedTime);
-            Console.WriteLine(foldercount + " folders, " + fileCount + " files, " + fileSize.ToString("n0") + " bytes");
-            Console.WriteLine(imgCount + " image files, " + imgSize + " bytes");
+            Console.WriteLine("Sequential Calculated in: " + elapsedTime);
+            Console.WriteLine(foldercount.ToString("n0") + " folders, " + fileCount.ToString("n0") + " files, " + fileSize.ToString("n0") + " bytes");
+            if (imgCount > 0)
+            {
+                Console.WriteLine(imgCount.ToString("n0") + " image files, " + imgSize.ToString("n0") + " bytes\n");
+            }
+            else
+            {
+                Console.WriteLine("No image files found in the directory\n");
+            }
         }
         static private long[] syncSearch(string path, long imgSize, long imgCount, long fileCount, long fileSize, long foldercount)
         {
@@ -139,9 +147,16 @@ namespace filesearch
             stopwatch.Stop();
             TimeSpan ts = stopwatch.Elapsed;
             String elapsedTime = ts.TotalSeconds + "s";
-            Console.WriteLine("Parallel Calculated in : " + elapsedTime);
-            Console.WriteLine(foldercount + " folders, " + fileCount + " files, " + fileSize.ToString("n0") + " bytes");
-            Console.WriteLine(imgCount + " image files, " + imgSize + " bytes");
+            Console.WriteLine("Parallel Calculated in: " + elapsedTime);
+            Console.WriteLine(foldercount.ToString("n0") + " folders, " + fileCount.ToString("n0") + " files, " + fileSize.ToString("n0") + " bytes");
+            if (imgCount > 0)
+            {
+                Console.WriteLine(imgCount.ToString("n0") + " image files, " + imgSize.ToString("n0") + " bytes\n");
+            }
+            else
+            {
+                Console.WriteLine("No image files found in the directory\n");
+            }
         }
 
         static private void parallelSearch(string path, long imgSize, long imgCount, long fileCount, long fileSize, long foldercount)
