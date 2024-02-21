@@ -16,6 +16,11 @@ namespace filesearch
             "-b\tRun in both parallel and single threaded mode.\r\n" +
             "\tRuns parallel followed by sequential mode\n";
         static string[] imageExtensions = new string[] { ".apng", ".avif", ".gif", ".jpg", ".jpeg", ".jfif", ".pjpeg", ".pjp", ".png", ".svg", ".webp", ".bmp", ".ico", ".cur", ".tif", ".tiff"};
+        static long icount = 0;
+        static long isize = 0;
+        static long fcount = 0;
+        static long fsize = 0;
+        static long fdcount = 0;
         static void Main(string[] args)
         {
             bool exists;
@@ -26,6 +31,7 @@ namespace filesearch
                 use = args[0];
                 path = args[1]; 
                 exists = Directory.Exists(path);
+                Console.WriteLine("Directory " + path + ":\n");
             }
             catch (Exception)
             {
@@ -73,9 +79,16 @@ namespace filesearch
             stopwatch.Stop();
             TimeSpan ts = stopwatch.Elapsed;
             String elapsedTime = ts.TotalSeconds + "s";
-            Console.WriteLine("Sequential Calculated in : " + elapsedTime);
-            Console.WriteLine(foldercount + " folders, " + fileCount + " files, " + fileSize.ToString("n0") + " bytes");
-            Console.WriteLine(imgCount + " image files, " + imgSize + " bytes");
+            Console.WriteLine("Sequential Calculated in: " + elapsedTime);
+            Console.WriteLine(foldercount.ToString("n0") + " folders, " + fileCount.ToString("n0") + " files, " + fileSize.ToString("n0") + " bytes");
+            if (imgCount > 0)
+            {
+                Console.WriteLine(imgCount.ToString("n0") + " image files, " + imgSize.ToString("n0") + " bytes\n");
+            }
+            else
+            {
+                Console.WriteLine("No image files found in the directory\n");
+            }
         }
         static private long[] syncSearch(string path, long imgSize, long imgCount, long fileCount, long fileSize, long foldercount)
         {
@@ -125,23 +138,62 @@ namespace filesearch
             long fileCount = 0;
             long imgSize = 0;
             long foldercount = 0;
-            var stats = parallelSearch(path, imgSize, imgCount, fileCount, fileSize, foldercount);
-            imgSize = stats[0];
-            imgCount = stats[1];
-            fileCount = stats[2];
-            fileSize = stats[3];
-            foldercount = stats[4];
+            parallelSearch(path, imgSize, imgCount, fileCount, fileSize, foldercount);
+            imgSize = isize;
+            imgCount = icount;
+            fileCount = fcount;
+            fileSize = fsize;
+            foldercount = fdcount;
             stopwatch.Stop();
             TimeSpan ts = stopwatch.Elapsed;
             String elapsedTime = ts.TotalSeconds + "s";
-            Console.WriteLine("Parallel Calculated in : " + elapsedTime);
-            Console.WriteLine(foldercount + " folders, " + fileCount + " files, " + fileSize.ToString("n0") + " bytes");
-            Console.WriteLine(imgCount + " image files, " + imgSize + " bytes");
+            Console.WriteLine("Parallel Calculated in: " + elapsedTime);
+            Console.WriteLine(foldercount.ToString("n0") + " folders, " + fileCount.ToString("n0") + " files, " + fileSize.ToString("n0") + " bytes");
+            if (imgCount > 0)
+            {
+                Console.WriteLine(imgCount.ToString("n0") + " image files, " + imgSize.ToString("n0") + " bytes\n");
+            }
+            else
+            {
+                Console.WriteLine("No image files found in the directory\n");
+            }
         }
 
-        static private long[] parallelSearch(string path, long imgSize, long imgCount, long fileCount, long fileSize, long foldercount)
+        static private void parallelSearch(string path, long imgSize, long imgCount, long fileCount, long fileSize, long foldercount)
         {
-            return new long[] { imgSize, imgCount, fileCount, fileSize, foldercount };
+            string[] folders = Directory.GetDirectories(path);
+            Parallel.ForEach(folders, folder =>
+            {
+                Interlocked.Increment(ref fdcount);
+                parallelSearch(folder, imgSize, imgCount, fileCount, fileSize, foldercount);
+            }
+            );
+            string[] files = Directory.GetFiles(path);
+            Parallel.ForEach(files, file =>
+            {
+                try
+                {
+                    var extension = Path.GetExtension(file);
+                    if (imageExtensions.Contains(extension))
+                    {
+                        Interlocked.Increment(ref icount);
+                        var stats = new FileInfo(file);
+                        Interlocked.Add(ref isize, stats.Length);
+                    }
+                    else
+                    {
+                        Interlocked.Increment(ref fcount);
+                        var stats = new FileInfo(file);
+                        Interlocked.Add(ref fsize, stats.Length);
+                    }
+                }
+                catch (Exception)
+                {
+                    //Swallow
+                }
+            }
+            );
+            //return new long[] { imgSize, imgCount, fileCount, fileSize, foldercount };
         }
     }
 }
