@@ -2,6 +2,7 @@
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
+using System.Reflection.Metadata.Ecma335;
 using System.Threading;
 // Author: Nathaniel Shah
 
@@ -33,7 +34,6 @@ namespace filesearch
                 use = args[0];
                 path = args[1]; 
                 exists = Directory.Exists(path); //Check if the directory exists
-                Console.WriteLine("Directory " + path + ":\n");
             }
             //If there is any issue with accessing the path, print the help message then exit gracefully
             catch (Exception)
@@ -47,8 +47,9 @@ namespace filesearch
                 printHelp();
                 return;
             }
+            Console.WriteLine("Directory '" + path + "':\n");
             //If the sequential flag is given, run a sequential search
-            if(use == "-s")
+            if (use == "-s")
             {
                 syncStart(path);
             }
@@ -122,17 +123,26 @@ namespace filesearch
         static private long[] syncSearch(string path, long imgSize, long imgCount, long fileCount, long fileSize, long foldercount)
         {
             string[] folders = Directory.GetDirectories(path);
+            // Recursively go throughs all subdirectories, and adds their file count to the current count
             foreach (string folder in folders)
             {
-                foldercount++;
-                var stats = syncSearch(folder, imgSize, imgCount, fileCount, fileSize, foldercount);
-                imgSize = stats[0];
-                imgCount = stats[1];
-                fileCount = stats[2];
-                fileSize = stats[3];
-                foldercount = stats[4];
+                try
+                {
+                    var stats = syncSearch(folder, imgSize, imgCount, fileCount, fileSize, foldercount);
+                    imgSize = stats[0];
+                    imgCount = stats[1];
+                    fileCount = stats[2];
+                    fileSize = stats[3];
+                    foldercount = stats[4];
+                    foldercount++;
+                }
+                catch {
+                    continue;
+                }
             }
-            string[] files = Directory.GetFiles(path);
+            // Gets an array of the names of all of the files contained within the directory
+            string[] files = Directory.GetFiles(path); 
+            // For every file check if it is an image, then add its size to the respective count
             foreach (string file in files)
             {
                 try
@@ -190,8 +200,15 @@ namespace filesearch
             string[] folders = Directory.GetDirectories(path);
             Parallel.ForEach(folders, folder =>
             {
-                Interlocked.Increment(ref fdcount);
-                parallelSearch(folder);
+                try
+                {
+                    parallelSearch(folder);
+                    Interlocked.Increment(ref fdcount);
+                }
+                catch
+                {
+                    //Swallow
+                }
             }
             );
             string[] files = Directory.GetFiles(path);
