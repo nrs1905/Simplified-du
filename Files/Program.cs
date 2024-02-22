@@ -198,12 +198,13 @@ namespace filesearch
         static private void parallelSearch(string path)
         {
             string[] folders = Directory.GetDirectories(path);
+            // Recursively go thorugh all of the subdirectories
             Parallel.ForEach(folders, folder =>
             {
                 try
                 {
                     parallelSearch(folder);
-                    Interlocked.Increment(ref fdcount);
+                    Interlocked.Increment(ref fdcount); // An atomic increment
                 }
                 catch
                 {
@@ -212,6 +213,7 @@ namespace filesearch
             }
             );
             string[] files = Directory.GetFiles(path);
+            // Parallel search of all files, check if each file is an image or not, then add its size to the respective count
             Parallel.ForEach(files, file =>
             {
                 try
@@ -219,14 +221,18 @@ namespace filesearch
                     var extension = Path.GetExtension(file);
                     if (imageExtensions.Contains(extension))
                     {
+                        // Atomic increment
                         Interlocked.Increment(ref icount);
                         var stats = new FileInfo(file);
+                        // Atomic addition
                         Interlocked.Add(ref isize, stats.Length);
                     }
                     else
                     {
+                        // Atomic increment
                         Interlocked.Increment(ref fcount);
                         var stats = new FileInfo(file);
+                        // Atomic addition
                         Interlocked.Add(ref fsize, stats.Length);
                     }
                 }
